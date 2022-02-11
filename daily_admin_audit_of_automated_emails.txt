@@ -1,0 +1,35 @@
+create or replace table `stac-labs.ia_sharing.policy_enforcement_automated_email_summary` as #alter to be your xx_sharing
+
+with 
+
+general_details as (
+    select 
+        current_date() as date,
+        'IA' as state, #your state code
+        'daily' as schedule,
+        0 as always
+), 
+
+admin_emails as
+(select 
+        distinct(a.email) as emails
+    from
+        `demsiasp.vansync.users` a #your state vansync
+    join   
+        `demsiasp.vansync.users_databases` as b #your state vansync
+    on
+        a.user_id = b.user_id
+    where 
+        b.role_name = 'State Administrator' and is_active is true),
+
+policy_tables as
+(select  * from
+        (select 'test_policy_1' as policy, count(*) as emails_sent from `stac-labs.ia_sharing.policy_enforcement_my_test_policy`) #add a new table for each policy you create and want to track
+        union all
+        (select 'test_policy_2' as policy, count(*) as emails_sent from `stac-labs.ia_sharing.policy_enforcement_my_test_policy2`) #add a new table for each policy you create and want to track
+        union all
+        (select 'test_policy_3' as policy, count(*) as emails_sent from `stac-labs.ia_sharing.policy_enforcement_my_test_policy3`) #add a new table for each policy you create and want to track
+) 
+
+select * from 
+general_details cross join admin_emails cross join policy_tables;
