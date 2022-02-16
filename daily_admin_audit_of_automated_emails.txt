@@ -24,12 +24,13 @@ admin_emails as
 
 policy_tables as
 (select  * from
-        (select 'test_policy_1' as policy, count(*) as emails_sent from `stac-labs.ia_sharing.policy_enforcement_my_test_policy`) #add a new table for each policy you create and want to track
+        (select 'test_policy_1' as policy, count(distinct(emails)) as emails_sent from `stac-labs.ia_sharing.policy_enforcement_my_test_policy`) #add a new table for each policy you create and want to track
         union all
-        (select 'test_policy_2' as policy, count(*) as emails_sent from `stac-labs.ia_sharing.policy_enforcement_my_test_policy2`) #add a new table for each policy you create and want to track
+        (select 'test_policy_2' as policy, count(distinct(emails)) as emails_sent from `stac-labs.ia_sharing.policy_enforcement_my_test_policy2`) #add a new table for each policy you create and want to track
         union all
-        (select 'test_policy_3' as policy, count(*) as emails_sent from `stac-labs.ia_sharing.policy_enforcement_my_test_policy3`) #add a new table for each policy you create and want to track
+        (select 'test_policy_3' as policy, count(distinct(emails)) as emails_sent from `stac-labs.ia_sharing.policy_enforcement_my_test_policy3`) #add a new table for each policy you create and want to track
 ) 
 
 select * from 
 general_details cross join admin_emails cross join policy_tables;
+
