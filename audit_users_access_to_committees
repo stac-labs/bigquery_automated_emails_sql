@@ -1,6 +1,7 @@
-#this query builds a table of committee admins and another table of all the users who have access to active committees and sends a list of all active users to the committee asdmins, so they can see who has access to their commmittees.
+# SEND EMAILS TO COMMITTEE ADMINS SHOWING THEM ALL THE USERS THAT HAVE ACCESS TO THEIR COMMITTEE.
+# CHANGE THE STATE-SPECIFIC INFO IN EACH LINE WHERE THERE IS A COMMENT BELOW
 
-create or replace table `stac-labs.oh_sharing.policy_enforcement_user_committee_access` as #alter to be your xx_sharing
+create or replace table `stac-labs.sbx_honeycuttm.policy_enforcement_user_committee_access` as #alter to be your xx_sharing
 
 with 
 
@@ -9,47 +10,90 @@ general_details as (
         current_date() as date,
         'OH' as state, #your state code
         'daily' as schedule,
-        0 as always #be sure to schedul this query to run monthly, then when the current_date = the date that the query ran, it will send out the emails.
+        0 as always
 ), 
 
-admin_emails as
+admin_emails as 
 (select 
-        distinct(a.email) as emails,
-        committee_name,
-        c.committee_id
-    from
-        `demsohsp.vansync.users` a #your state vansync
-    join   
-        `demsohsp.vansync.users_databases` as b #your state vansync
-    on
+        distinct(a.email) as emails, 
+        committee_name, 
+        c.committee_id 
+    from 
+        `demsohsp.vansync.users` a #your state vansync 
+    join  
+        `demsohsp.vansync.users_databases` as b #your state vansync 
+    on 
         a.user_id = b.user_id 
     join 
-        `demsohsp.vansync.committees` as c #your state vansync
+        `demsohsp.vansync.committees` as c #your state vansync 
     on 
-        a.committee_id = c.committee_id
+        a.committee_id = c.committee_id 
     where 
         b.role_name = '(1) Committee Admin' and b.is_active is true and c.is_active is true #change role_name to admin for committees
-    group by 1,2,3
-        ),
+    group by 1,2,3 
+        ), 
 
-committee_users as
+committee_users_myv as
 (
 select 
+    a.user_id,
     committee_id,
     username,
     first_name,
     last_name,
     role_name,
     date_of_last_login
-from
-    `demsohsp.vansync.users` as a
+from 
+    `demsohsp.vansync.users` as a #your state vansync 
 join 
-    `demsohsp.vansync.users_databases` as b 
+    `demsohsp.vansync.users_databases` as b #your state vansync 
 on
     a.user_id = b.user_id
-where role_name is not null
-group by 1,2,3,4,5,6
-) 
+where role_name is not null and database_mode_id = '0'
+group by 1,2,3,4,5,6,7
+) ,
 
-select date, state, schedule, always, emails, committee_name, username, first_name, last_name, role_name, date_of_last_login from 
-general_details as z cross join admin_emails as x left join committee_users as y on x.committee_id = y.committee_id;
+committee_users_myc as
+(
+select 
+    a.user_id,
+    committee_id,
+    username,
+    first_name,
+    last_name,
+    role_name,
+    date_of_last_login
+from 
+    `demsohsp.vansync.users` as a #your state vansync 
+join 
+    `demsohsp.vansync.users_databases` as b #your state vansync 
+on 
+    a.user_id = b.user_id 
+where role_name is not null and database_mode_id = '1'
+group by 1,2,3,4,5,6,7
+) ,
+committee_users as
+(
+select 
+    a.committee_id,
+    a.username,
+    a.first_name,
+    a.last_name,
+    a.role_name as My_Voters_Profile,
+    b.role_name as My_Camp_Profile,
+    a.date_of_last_login
+from 
+    committee_users_myv as a 
+full join 
+    committee_users_myc as b 
+on
+    a.user_id = b.user_id
+where (a.role_name is not null and b.role_name is not null) 
+group by 1,2,3,4,5,6,7
+)
+
+select date, state, schedule, always, emails, committee_name, username, first_name, last_name, My_Voters_Profile, My_Camp_Profile, date_of_last_login from 
+general_details as z cross join admin_emails as x left join committee_users as y on x.committee_id = y.committee_id
+order by emails, committee_name, username;
+
+
