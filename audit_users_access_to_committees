@@ -2,7 +2,7 @@
 # CHANGE THE STATE-SPECIFIC INFO IN EACH LINE WHERE THERE IS A COMMENT BELOW
 # SCHEDULE THIS QUERY IN PHOENIX TO RUN MONTHLY AND YOUR COMMITTEE ADMINS WILL GET A MONTHLY EMAIL NOTIFYING THEM OF THEIR COMMITTEE'S USERS
 
-create or replace table `stac-labs.sbx_honeycuttm.policy_enforcement_user_committee_access` as #alter to be your xx_sharing
+create or replace table `stac-labs.xx_sharing.policy_enforcement_user_committee_access` as #alter to be your xx_sharing
 
 with 
 
@@ -20,9 +20,9 @@ admin_emails as
         committee_name, 
         c.committee_id 
     from 
-        `demsohsp.vansync.users` a #your state vansync 
+        `demsxxsp.vansync.users` a #your state vansync 
     join  
-        `demsohsp.vansync.users_databases` as b #your state vansync 
+        `demsxxsp.vansync.users_databases` as b #your state vansync 
     on 
         a.user_id = b.user_id 
     join 
@@ -45,9 +45,9 @@ select
     role_name,
     date_of_last_login
 from 
-    `demsohsp.vansync.users` as a #your state vansync 
+    `demsxxsp.vansync.users` as a #your state vansync 
 join 
-    `demsohsp.vansync.users_databases` as b #your state vansync 
+    `demsxxsp.vansync.users_databases` as b #your state vansync 
 on
     a.user_id = b.user_id
 where role_name is not null and database_mode_id = '0'
@@ -65,9 +65,9 @@ select
     role_name,
     date_of_last_login
 from 
-    `demsohsp.vansync.users` as a #your state vansync 
+    `demsxxsp.vansync.users` as a #your state vansync 
 join 
-    `demsohsp.vansync.users_databases` as b #your state vansync 
+    `demsxxsp.vansync.users_databases` as b #your state vansync 
 on 
     a.user_id = b.user_id 
 where role_name is not null and database_mode_id = '1'
