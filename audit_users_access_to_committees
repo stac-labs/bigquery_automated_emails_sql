@@ -1,17 +1,17 @@
 # SEND EMAILS TO COMMITTEE ADMINS SHOWING THEM ALL THE USERS THAT HAVE ACCESS TO THEIR COMMITTEE.
-# CHANGE THE STATE-SPECIFIC INFO IN EACH LINE WHERE THERE IS A COMMENT BELOW
-# SCHEDULE THIS QUERY IN PHOENIX TO RUN MONTHLY AND YOUR COMMITTEE ADMINS WILL GET A MONTHLY EMAIL NOTIFYING THEM OF THEIR COMMITTEE'S USERS
 
-create or replace table `stac-labs.xx_sharing.policy_enforcement_user_committee_access` as #alter to be your xx_sharing
+create or replace table `stac-labs.xx_sharing.policy_enforcement_user_committee_access_xx` as #alter xx to be your two-letter state (i.e. "tx")
 
 with 
 
 general_details as (
     select 
         current_date() as date,
-        'OH' as state, #your state code
-        'daily' as schedule,
-        0 as always
+        'XX' as state, #alter xx to be your two-letter state
+        'MONTHLY COMMITTEE ACCOUNT REPORT. As you are listed as a VoteBuilder Administrator, please review the following users with Active Accounts on your VAN committee. So to protect access to your voter data, please deactivate anyone who should not have access or has not logged in for a long time. If you do not have permission to deactivate a user or have questions about who is on this list please submit a ticket to [state support email].' as policy, #alter to include your state's support email
+        'monthly' as schedule,
+        0 as always,
+        'VAN Committee Account Report' as subject #alter subject to your liking
 ), 
 
 admin_emails as 
@@ -20,17 +20,19 @@ admin_emails as
         committee_name, 
         c.committee_id 
     from 
-        `demsxxsp.vansync.users` a #your state vansync 
+        `demsxxsp.vansync.users` a #alter xx to be your two-letter state
     join  
-        `demsxxsp.vansync.users_databases` as b #your state vansync 
+        `demsxxsp.vansync.users_databases` as b #alter xx to be your two-letter state
     on 
         a.user_id = b.user_id 
     join 
-        `demsohsp.vansync.committees` as c #your state vansync 
+        `demsxxsp.vansync.committees` as c #alter xx to be your two-letter state
     on 
         a.committee_id = c.committee_id 
     where 
-        b.role_name = '(1) Committee Admin' and b.is_active is true and c.is_active is true #change role_name to admin for committees
+        b.role_name = 'Field (1) Committee Admin' and b.is_active is true #alter to be your profile name(s) for committee admins
+        and c.is_active is true 
+        and b.is_active is true
     group by 1,2,3 
         ), 
 
@@ -38,19 +40,25 @@ committee_users_myv as
 (
 select 
     a.user_id,
-    committee_id,
+    a.committee_id,
     username,
     first_name,
     last_name,
     role_name,
     date_of_last_login
 from 
-    `demsxxsp.vansync.users` as a #your state vansync 
+    `demsxxsp.vansync.users` as a #alter xx to be your two-letter state
 join 
-    `demsxxsp.vansync.users_databases` as b #your state vansync 
+    `demsxxsp.vansync.users_databases` as b #alter xx to be your two-letter state
 on
     a.user_id = b.user_id
+join 
+    `demsxxsp.vansync.committees` as c #alter xx to be your two-letter state
+on 
+    a.committee_id = c.committee_id 
 where role_name is not null and database_mode_id = '0'
+and c.is_active is true
+and b.is_active is true
 group by 1,2,3,4,5,6,7
 ) ,
 
@@ -58,19 +66,25 @@ committee_users_myc as
 (
 select 
     a.user_id,
-    committee_id,
+    a.committee_id,
     username,
     first_name,
     last_name,
     role_name,
     date_of_last_login
 from 
-    `demsxxsp.vansync.users` as a #your state vansync 
+    `demsxxsp.vansync.users` as a #alter xx to be your two-letter state
 join 
-    `demsxxsp.vansync.users_databases` as b #your state vansync 
+    `demsxxsp.vansync.users_databases` as b #alter xx to be your two-letter state
 on 
     a.user_id = b.user_id 
+join 
+    `demsxxsp.vansync.committees` as c #alter xx to be your two-letter state
+on 
+    a.committee_id = c.committee_id 
 where role_name is not null and database_mode_id = '1'
+and c.is_active is true
+and b.is_active is true
 group by 1,2,3,4,5,6,7
 ) ,
 committee_users as
@@ -93,8 +107,12 @@ where (a.role_name is not null and b.role_name is not null)
 group by 1,2,3,4,5,6,7
 )
 
-select date, state, schedule, always, emails, committee_name, username, first_name, last_name, My_Voters_Profile, My_Camp_Profile, date_of_last_login from 
+select date, state, policy, schedule, always, emails, committee_name, username, first_name, last_name, My_Voters_Profile, My_Camp_Profile, date_of_last_login from 
 general_details as z cross join admin_emails as x left join committee_users as y on x.committee_id = y.committee_id
+
+#USE THE BELOW LINE FOR TESTING BEFORE LAUNCH. IF YOU ARE AN ADMIN ON A COMMITTEE PUT YOUR EMAIL HERE AND UN-COMMENT THE LINE, THEN ONLY ONE EMAIL WILL GO OUT TO YOUR EMAIL ADDRESS AND YOU WILL SEE HOW IT LOOKS BEFORE SENDING TO EVERY ADMIN IN THE STATE.
+#where emails in ('YOURADMINEMAIL@gmail.com') #remove this after test and validation
+
 order by emails, committee_name, username;
 
 
