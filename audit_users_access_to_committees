@@ -1,4 +1,5 @@
 # SEND EMAILS TO COMMITTEE ADMINS SHOWING THEM ALL THE USERS THAT HAVE ACCESS TO THEIR COMMITTEE.
+# IMPORTANT: WHEN YOU SCHEDULE THIS EMAIL SET IT TO RUN AT 4AM EST ON THE FIRST OF EACH MONTH
 
 create or replace table `stac-labs.xx_sharing.policy_enforcement_user_committee_access_xx` as #alter xx to be your two-letter state (i.e. "tx")
 
@@ -6,11 +7,11 @@ with
 
 general_details as (
     select 
-        current_date() as date,
+        DATE_ADD(CURRENT_DATE(), INTERVAL -1 DAY) as date, # this makes the date the last day of each month, when the scheduled query is run on the first date of each month, thereby capturing the most up-to-date list of users.
         'XX' as state, #alter xx to be your two-letter state
         'MONTHLY COMMITTEE ACCOUNT REPORT. As you are listed as a VoteBuilder Administrator, please review the following users with Active Accounts on your VAN committee. So to protect access to your voter data, please deactivate anyone who should not have access or has not logged in for a long time. If you do not have permission to deactivate a user or have questions about who is on this list please submit a ticket to [state support email].' as policy, #alter to include your state's support email
-        'monthly' as schedule,
-        0 as always,
+        'monthly' as schedule, # to test this, set to daily, when finished testing set back to 'monthly'
+        0 as always, # to test this, set to 1, when finished testing set back to 0
         'VAN Committee Account Report' as subject #alter subject to your liking
 ), 
 
